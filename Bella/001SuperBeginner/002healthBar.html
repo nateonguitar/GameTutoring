@@ -1,0 +1,88 @@
+<html>
+    <body>
+        <div id="healthBarContainer">
+            <div id="healthbar"></div>
+        </div>
+        <p>
+            <span id="currentHealth">current health</span> / <span id="maxHealth">max health</span>
+        </p>
+
+        <button onclick="hitPlayer()">Hit player</button>
+        <button onclick="healPlayer()">Heal player</button>
+        <button onclick="levelUp()">Level up</button>
+        
+        <h1 id="youGotStuffedInARobot">
+             
+        </h1>
+
+
+     
+
+        <script>
+            var healthBarContainer = document.getElementById("healthBarContainer");
+            var healthbar          = document.getElementById("healthbar");
+            var currentHealthText  = document.getElementById("currentHealth");
+            var maxHealthText      = document.getElementById("maxHealth");
+            var dead               = document.getElementById("youGotStuffedInARobot");
+            var maxHealth = 100;
+            var currentHealth = 50;
+
+            var damage = 10;
+            var heal = 20;
+
+            drawBarContainer();
+            drawHealthbar();
+            drawHealthText();
+
+            function levelUp(){
+                maxHealth = maxHealth + 10;
+                heal = heal+1;
+                drawBarContainer();
+                drawHealthText();
+            }
+
+            function drawHealthText(){
+                currentHealthText.innerHTML = currentHealth;
+                maxHealthText.innerHTML = maxHealth;
+            }
+            
+            function hitPlayer(){
+                currentHealth = currentHealth - damage;
+
+                if (currentHealth < 0){
+                    currentHealth = 0;
+                }
+                if (currentHealth == 0){
+                    dead.innerHTML = "you Got Stuffed In A Robot";
+                }
+                drawHealthbar();
+                drawHealthText();
+            }
+
+            function healPlayer(){
+                currentHealth = currentHealth + heal;
+
+                if(currentHealth > maxHealth){
+                    currentHealth = maxHealth;
+                }
+                dead.innerHTML = "";
+                drawHealthbar();
+                drawHealthText();
+            }
+
+            function drawBarContainer(){
+                healthBarContainer.style.width = maxHealth + "px";
+                healthBarContainer.style.height = "10px";
+                healthBarContainer.style.borderColor = "black";
+                healthBarContainer.style.borderWidth = "2px";
+                healthBarContainer.style.borderStyle = "solid";
+            }
+
+            function drawHealthbar(){
+                healthbar.style.width = currentHealth + "px";
+                healthbar.style.height = "100%";
+                healthbar.style.backgroundColor = "blue";
+            }
+        </script>
+    </body>
+</html>

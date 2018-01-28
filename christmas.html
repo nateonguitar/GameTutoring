@@ -1,0 +1,75 @@
+<html>
+    <head>
+
+    </head>
+    <body>
+        <div id="howmany">
+            <form action="" onsubmit="addToNamesBox(); return false;">
+                    Enter a name: <input type="text" id="new_name">
+                    <input type="submit" value="Add name (or just press enter from the text box)">
+            </form>
+        </div>
+        <input type="button" onclick="pair();" value="Pair People Up">
+        <div id="names">
+
+        </div>
+        <hr>
+        <h2>Results</h2>
+        <div id="result">
+
+        </div>
+    
+
+        <script>
+            let names = [];
+            let paired_names = [];
+
+            function addToNamesBox(){
+                let new_name = document.getElementById("new_name").value;
+                if(new_name && names.indexOf(new_name) == -1){
+                    names.push(document.getElementById("new_name").value);
+                }
+                else{
+                    document.getElementById("new_name").value = '';
+                    return;
+                }
+                let names_string = '';
+                for(let name of names){
+                    names_string += name + '<br>';
+                }
+                document.getElementById("names").innerHTML = names_string;
+                document.getElementById("new_name").value = '';
+            }
+
+            function pair(){
+                if(names.length > 1){
+                    paired_names = [];
+                    let i=0;
+                    for(let name of names){
+                        let paired_name = names[Math.floor(Math.random() * names.length)];
+                        let tries = 0;
+                        while(paired_name == name || paired_names.indexOf(paired_name) != -1){
+                            paired_name = names[Math.floor(Math.random() * names.length)];
+                            tries++;
+                            if(tries > 300){
+                                pair();
+                                return;
+                            }
+                        }
+                        paired_names[i] = paired_name;
+                        i++;
+                    }
+
+                    let result_string = '<table>';
+                    for(let i=0; i<names.length; i++){
+                        result_string += '<tr><td>' + names[i] + '</td><td> => ' + paired_names[i] + '</td></tr>';
+                    }
+                    result_string += '</table>';
+
+                    document.getElementById("result").innerHTML = result_string;
+                    document.getElementById("names").innerHTML = '';
+                }
+            }
+        </script>
+    </body>
+</html>

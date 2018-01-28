@@ -1,0 +1,200 @@
+<html>
+<head>
+	<script src="Models/Star.js"></script>
+	<script src="Models/Player.js"></script>
+	<script src="Models/Ground.js"></script>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<canvas id="gameCanvas"></canvas>
+	
+	<div id="debug">
+		<p id="debug-star-count"></p>
+	</div>
+	
+	<script type="text/JavaScript">
+		let canvas         = document.getElementById("gameCanvas");
+		let context        = canvas.getContext("2d");
+
+		let sizeMultiplier = 60;
+		canvas.width       = 16 * sizeMultiplier;
+		canvas.height      = 9 * sizeMultiplier;
+
+		// debugging
+		let debug_star_count = document.getElementById("debug-star-count");
+
+		let stars = [];
+		let player = null;
+		let ground = null;
+		
+		function onStart() {
+			ground = new Ground(canvas.height * 2/3);
+			player = new Player(canvas.width/10, canvas.height * 3/4, canvas.width / 40, canvas.height / 10);
+
+			document.onkeydown = function(event) {
+				event = event || window.event;
+
+				console.log(event.keyCode);
+				// when you press alt enter, enter == 13
+				if (event.altKey && event.keyCode == 13) {
+					goFullScreen();
+				}
+
+				//space
+				if(event.keyCode == 32){
+					jump();
+				}
+
+				if(event.keyCode == 70){
+					fire();
+				}
+			};
+
+			document.onkeyup = function(event) {
+				
+			};
+
+			for(let i=0; i<canvas.height; i++){
+				// add 2 stars per row to match how it looks when we're playing
+				let star = new Star(canvas.width, stars.length);
+				star.setY(i);
+				stars.push(star);
+
+				star = new Star(canvas.width, stars.length);
+				star.setY(i);
+				stars.push(star);
+			}
+		}
+
+		function update(){
+			addStar();
+			moveStarsDown();
+			removeOutOfBoundStars();
+			updateDebug();
+		}
+
+		function fire(){
+			console.log("fire");
+		}
+
+		function jump(){
+			console.log("jump");
+		}
+
+		function updateDebug(){
+			debug_star_count.innerHTML = "Star count: " + stars.length;
+		}
+
+		function addStar(){
+			let star = new Star(canvas.width);
+			stars.push(star);
+		}
+
+		function moveStarsDown(){
+			for(let i=0; i<stars.length; i++){
+				stars[i].moveDown();
+			}
+		}
+
+		function removeOutOfBoundStars(){
+			for(let i=0; i<stars.length; i++){
+				if(stars[i].y > canvas.height){
+					stars.splice(i, 1);
+				}
+			}
+		}
+		
+		function draw(){
+			// erase the canvas at the start of each frame
+			context.clearRect(0, 0, canvas.width, canvas.height);
+			
+			
+			// draw stars
+			for(let star of stars){
+				context.beginPath();
+				context.rect(star.x, star.y, star.size, star.size);
+				context.fillStyle = star.color;
+				context.fill();
+				context.lineWidth = 1/3 * star.size;
+				context.strokeStyle = star.outline;
+				context.stroke();
+			}
+/*
+			// draw the ground
+			context.beginPath();
+			context.rect(0, ground.y, canvas.width, canvas.height - ground.y );
+			context.fillStyle = ground.color;
+			context.fill();
+
+			// draw the player
+			
+			// draw head
+			context.beginPath();
+			context.rect(player.head.x, player.head.y, player.head.width, player.head.height);
+			context.fillStyle = player.head.color;
+			context.fill();
+			context.lineWidth = player.outline.width;
+			context.strokeStyle = player.outline.color;
+			context.stroke();
+
+			// draw shirt
+			context.beginPath();
+			context.rect(player.shirt.x, player.shirt.y, player.shirt.width, player.shirt.height);
+			context.fillStyle = player.shirt.color;
+			context.fill();
+			context.lineWidth = player.outline.width;
+			context.strokeStyle = player.outline.color;
+			context.stroke();
+
+			// draw pants
+			context.beginPath();
+			context.rect(player.pants.x, player.pants.y, player.pants.width, player.pants.height);
+			context.fillStyle = player.pants.color;
+			context.fill();
+			context.lineWidth = player.outline.width;
+			context.strokeStyle = player.outline.color;
+			context.stroke();
+
+			// draw shoes
+			context.beginPath();
+			context.rect(player.shoes.x, player.shoes.y, player.shoes.width, player.shoes.height);
+			context.fillStyle = player.shoes.color;
+			context.fill();
+			context.lineWidth = player.outline.width;
+			context.strokeStyle = player.outline.color;
+			context.stroke();
+
+			// draw temporary box around player
+			context.beginPath();
+			context.rect(player.x, player.y, player.width, player.height);
+			context.lineWidth = 1;
+			context.strokeStyle = "yellow";
+			context.stroke();
+			*/
+		}
+
+		function gameLoop() {
+			update();
+			draw();
+			
+			window.requestAnimationFrame(gameLoop);
+		}
+		
+		onStart();
+
+		window.requestAnimationFrame(gameLoop);
+
+		function goFullScreen(){
+			if(canvas.requestFullScreen){
+				canvas.requestFullScreen();
+			}
+			else if(canvas.webkitRequestFullScreen){
+				canvas.webkitRequestFullScreen();
+			}
+			else if(canvas.mozRequestFullScreen){
+				canvas.mozRequestFullScreen();
+			}
+		}
+	</script>
+</body>
+</html>

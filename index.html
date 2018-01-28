@@ -1,0 +1,52 @@
+<html>
+<head>
+	
+</head>
+<body>
+	<h2>
+		<span id="days">0</span> : <span id="hours">0</span> : <span id="minutes">0</span> : <span id="seconds">0</span>
+	</h2>
+	<script type="text/JavaScript">
+		let element_days    = document.getElementById("days");
+		let element_hours   = document.getElementById("hours");
+		let element_minutes = document.getElementById("minutes");
+		let element_seconds = document.getElementById("seconds");
+		
+		let days    = 0;
+		let hours   = 0;
+		let minutes = 0;
+		let seconds = 0;
+		
+		function display(){
+			element_seconds.innerHTML = seconds;
+			element_minutes.innerHTML = minutes;
+			element_hours.innerHTML   = hours;
+			element_days.innerHTML    = days;
+		}
+		
+		setInterval(
+			function(){
+				seconds = seconds + 1;
+				
+				if(seconds == 60){
+					seconds = 0;
+					minutes = minutes + 1;
+				}
+				
+				if(minutes == 60){
+					minutes = 0;
+					hours = hours + 1;
+				}
+				
+				if(hours == 24){
+					hours = 0;
+					days = days + 1;
+				}
+				
+				display();
+			},
+			1000
+		);
+	</script>
+</body>
+</html>

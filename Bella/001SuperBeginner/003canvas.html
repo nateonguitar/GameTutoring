@@ -1,0 +1,28 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <canvas id="batteryCanvas" style="background-color:black;" width="1120" height="630">
+
+        </canvas>
+
+
+
+        <script type="text/JavaScript">
+            var batteryCanvas = document.getElementById("batteryCanvas");
+            var context = batteryCanvas.getContext("2d");
+
+            // set up rectangle
+            var x = 50;
+            var y = 20;
+            var width = 100;
+            var height = 200;
+
+            // draw rectangle
+            context.beginPath();
+            context.fillStyle = "white";
+            context.rect(x, y, width, height);
+            context.fill();
+        </script>
+    </body>
+</html>

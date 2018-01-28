@@ -1,0 +1,171 @@
+<html>
+    <head>
+        <style type="text/css">
+            #batteryCanvas {
+                border:1px solid black;
+                background-color:#777;
+            }
+
+            #lightSwitch {
+                height:20px;
+                width:20px;
+                background-color:aquamarine;
+                border: 1px solid black;
+                cursor:row-resize;
+            }
+            #lightSwitch:hover {
+                background-color:darkcyan;
+            }
+        </style>
+    </head>
+    <body>
+        <p id="lightSwitch"></p>
+        <p id="batteryActual"></p>
+        <canvas id="batteryCanvas" width="1120" height="630">
+
+        </canvas>
+
+
+        <script type="text/JavaScript">
+            function onLightSwitchHover() {
+                hoveringOverLightSwitch = true;
+            }
+            function onLightSwitchOut() {
+                hoveringOverLightSwitch = false;
+            }
+
+            var lightSwitch = document.getElementById("lightSwitch");
+            lightSwitch.addEventListener("mouseover", onLightSwitchHover);
+            lightSwitch.addEventListener("mouseout", onLightSwitchOut);
+
+            var batteryActual = document.getElementById("batteryActual");
+            var batteryCanvas = document.getElementById("batteryCanvas");
+            var context = batteryCanvas.getContext("2d");
+
+            var batteryLife = 100;
+            var segmentSize = 25;
+
+            var batteryColor = "yellow";
+
+            var hoveringOverLightSwitch = false;
+
+            // set up rectangle
+            var batterySegment1 = {
+                x : 50,
+                y : 20
+            };
+
+            var batterySegment2 = {
+                x : 100,
+                y : 20
+            };
+
+            var batterySegment3 = {
+                x : 150,
+                y : 20
+            };
+
+            var batterySegment4 = {
+                x : 200,
+                y : 20
+            };
+            
+            
+            //------------------------------
+
+            function update() {
+                if (batteryLife > 0) {
+                    if (hoveringOverLightSwitch) {
+                        batteryLife = batteryLife - 1/10;
+                    }
+                    
+                    batteryActual.innerHTML = "Battery: " + batteryLife;
+
+                    if (batteryLife > 75) {
+                        batteryColor = "blue";
+                    }
+                    else if (batteryLife > 50) {
+                        batteryColor = "green";
+                    }
+                    else if (batteryLife > 25) {
+                        batteryColor = "yellow";
+                    }
+                    else {
+                        batteryColor = "red";
+                    }
+
+                }
+            }
+
+            function draw() {
+                // erase the whole canvas at the start of every frame
+                context.clearRect(0, 0, batteryCanvas.width, batteryCanvas.height);
+                
+                if (batteryLife > 0) {
+                    // draw rectangle
+                    context.beginPath();
+                    context.fillStyle = batteryColor;
+                    context.rect(batterySegment1.x, batterySegment1.y, segmentSize * 1.9, segmentSize);
+                    context.fill();
+                }
+
+                if (batteryLife > 25) {
+                    // draw rectangle
+                    context.beginPath();
+                    context.fillStyle = batteryColor;
+                    context.rect(batterySegment2.x, batterySegment2.y, segmentSize * 1.9, segmentSize);
+                    context.fill();
+                }
+
+                if (batteryLife > 50) {
+                    // draw rectangle
+                    context.beginPath();
+                    context.fillStyle = batteryColor;
+                    context.rect(batterySegment3.x, batterySegment3.y, segmentSize * 1.9, segmentSize);
+                    context.fill();
+                }
+
+                if (batteryLife > 75) {
+                    // draw rectangle
+                    context.beginPath();
+                    context.fillStyle = batteryColor;
+                    context.rect(batterySegment4.x, batterySegment4.y, segmentSize * 1.9, segmentSize);
+                    context.fill();
+                }
+
+                // battery body
+                context.beginPath();
+                context.strokeStyle = "black";
+                context.rect(
+                    batterySegment1.x - 2,
+                    batterySegment1.y - 2,
+                    202,
+                    segmentSize + 4
+                );
+                context.stroke();
+
+                // battery nub
+                context.beginPath();
+                context.strokeStyle = "black";
+                context.rect(
+                    batterySegment1.x - 2 + 202,
+                    batterySegment1.y + segmentSize / 4,
+                    segmentSize / 4,
+                    segmentSize / 2
+                );
+                context.stroke();
+            }
+
+            //------------------------------
+
+            function gameLoop() {
+                update();
+                draw();
+            }
+
+            setInterval(function(){
+                gameLoop();
+            }, 1000/30);
+        </script>
+    </body>
+</html>

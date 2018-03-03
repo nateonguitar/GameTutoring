@@ -1,0 +1,86 @@
+<html>
+    <head>
+        <script src="classes/BackgroundCanvas.js"></script>
+        <script src="classes/Grass.js"></script>
+        <script src="classes/Player.js"></script>
+    </head>
+    <body>
+        <canvas id="canvas_background"></canvas>
+
+        <script type="text/JavaScript">
+            //---------------------------------------------------
+            // variables
+            //---------------------------------------------------
+            let canvas_background;
+            let background_grasses = [];
+            let player;
+
+
+            //---------------------------------------------------
+            // main game functions
+            //---------------------------------------------------
+            function start() {
+                player = new Player();
+                canvas_background = new BackgroundCanvas(
+                    document.getElementById("canvas_background"),
+                    150 // screen size
+                );
+
+                // pre-populate our grasses
+                for (let i=0; i<canvas_background.height; i+=player.speed) {
+                    background_grasses.push(new Grass(Math.random() * canvas_background.width, i));
+                }
+            }
+
+            function update() {
+                background_grasses.push(new Grass(Math.random() * canvas_background.width));
+                
+
+                // must start at the end of the list
+                // can't use the other loop style that's easier to read
+                // for (let grass of background_grasses) {
+                for (let i=background_grasses.length-1; i>=0; i--) {
+                    // move each grassdown the screen
+                    let grass = background_grasses[i];
+                    grass.y += player.speed;
+                    
+                    // check for grasses that go below the screen and delete them
+                    if (grass.y > canvas_background.height) {
+                        background_grasses.splice(i,1);
+                    }
+                }
+            }
+
+            function draw() {
+                // erase the whole canvas at the start of every frame
+                canvas_background.context.clearRect(0, 0, canvas_background.width, canvas_background.height);
+
+                // draw each grass
+                for (let grass of background_grasses) {
+                    canvas_background.context.beginPath();
+                    canvas_background.context.fillStyle = canvas_background.grass_color;
+                    canvas_background.context.rect(grass.x, grass.y, grass.width, grass.height);
+                    canvas_background.context.fill();
+                }
+            }
+
+            //---------------------------------------------------
+            // helper functions
+            //---------------------------------------------------
+
+            //---------------------------------------------------
+            // set up
+            //---------------------------------------------------
+            let GameLoop = function(){
+                update();
+                draw();
+            }
+
+            //---------------------------------------------------
+            // launch our game
+            //---------------------------------------------------
+            start();
+            setInterval(GameLoop, 1000/30);
+        </script>
+    </body>
+</html>

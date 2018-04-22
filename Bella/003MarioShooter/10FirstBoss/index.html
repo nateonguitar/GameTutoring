@@ -1,0 +1,501 @@
+<html>
+    <head>
+        <script src="classes/BackgroundCanvas.js"></script>
+        <script src="classes/Grass.js"></script>
+        <script src="classes/Fireball.js"></script>
+        <script src="classes/Player.js"></script>
+        <script src="classes/Chocobo.js"></script>
+        <script src="classes/PowerUp.js"></script>
+        <script src="classes/DyingObject.js"></script>
+        <script src="classes/Bosses/Seymour.js"></script>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas><br>
+        <input type="button" value="Go Full Screen" onclick="goFullScreen()">
+
+        <script type="text/JavaScript">
+            //---------------------------------------------------
+            // variables
+            //---------------------------------------------------
+            let canvas;
+            let framesPerSecondUpdate = 60;
+            let framesPerSecondDraw = 60;
+            let backgroundGrasses = [];
+            let player;
+            let screenSizeMultiplier = 150;
+
+            let bossTime = false;
+
+            // powerups
+            let requiredKillsForPowerup = 10;
+            let killsSinceLastPowerup = 0;
+
+            // chocobos
+            let chocobos = [];
+            let numberOfChocobosPerSecond = 2;
+            let chocoboFrameCounter = 0;
+            let numberOfChocobosKilled = 0;
+            let numberOfChocobosToKill = 5;
+
+            let fireballs = [];
+
+            let bosses = [];
+            let bossesIndex = 0;
+
+            let powerups = [];
+
+            let dyingObjects = [];
+            let deadObjects = [];
+
+            let gameOver = false;
+
+            //---------------------------------------------------
+            // main game functions
+            //---------------------------------------------------
+            function update() {
+                handlePlayerDeath();
+
+                if (gameOver == false) {
+                    manageGrass();
+                    manageChocobos();
+                    manageFireballs();
+                    managePowerups();
+                    manageBossTime();
+                    manageDeadAndDyingObjects();
+                    manageCollisionDetection();
+                    player.controlPlayer();
+                }
+            }
+
+            function draw() {
+                eraseCanvas();
+                drawGrass();
+                drawEnemies();
+                drawFireballs();
+                drawPowerUps();
+                drawBosses();
+                drawDyingObjects();
+                drawPlayer();
+
+                drawHUD();
+            }
+
+            //---------------------------------------------------
+            // helper functions
+            //---------------------------------------------------
+            function shootFireball() {
+                let fireball = new Fireball();
+                fireball.x = player.x + player.width/2 - fireball.width/2;
+                fireball.y = player.y;
+
+                fireballs.push( fireball );
+            }
+            function eraseCanvas() {
+                // erase the whole canvas at the start of every frame
+                canvas.context.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            function drawGrass() {
+                // draw each grass
+                for (let grass of backgroundGrasses) {
+                    canvas.context.beginPath();
+                    canvas.context.fillStyle = canvas.grass_color;
+                    canvas.context.rect(grass.x, grass.y, grass.width, grass.height);
+                    canvas.context.fill();
+                }
+            }
+            function drawEnemies() {
+                for (let chocobo of chocobos) {
+                    canvas.context.drawImage(chocobo.image, chocobo.x, chocobo.y, chocobo.width, chocobo.height);
+                }
+            }
+            function drawFireballs() {
+                for (let fireball of fireballs) {
+                    canvas.context.drawImage(fireball.image, fireball.x, fireball.y, fireball.width, fireball.height);
+                }
+            }
+            function drawPowerUps() {
+                for (let powerup of powerups) {
+                    canvas.context.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
+                }
+            }
+            function drawBosses() {
+                for (let boss of bosses[bossesIndex]) {
+                    canvas.context.drawImage(boss.image, boss.x, boss.y, boss.width, boss.height);
+                }
+            }
+
+            function drawDyingObjects() {
+                for (let dyingObject of dyingObjects) {
+                    canvas.context.drawImage(dyingObject.image, dyingObject.x, dyingObject.y, dyingObject.width, dyingObject.height);
+                }
+            }
+            function drawPlayer() {
+                // draw player
+                canvas.context.drawImage(player.image, player.x, player.y, player.width, player.height);
+            }
+            function drawHUD() {
+                canvas.context.fillStyle = "white";
+                canvas.context.font = "bold 24px Arial";
+                canvas.context.fillText("HP: " + player.hp, 20, 40);
+
+                if (gameOver == true) {
+                    canvas.context.fillStyle = "white";
+                    canvas.context.font = "bold 36px Arial";
+                    canvas.context.fillText("Game Over", canvas.width/2 - 100, canvas.height/2);
+                }
+            }
+
+            function handlePlayerDeath() {
+                if (player.hp <= 0) {
+                    gameOver = true;
+                }
+            }
+
+
+
+            function manageGrass() {
+                backgroundGrasses.push(new Grass(Math.random() * canvas.width));
+                // must start at the end of the list
+                // can't use the other loop style that's easier to read
+                // for (let grass of backgroundGrasses) {
+                for (let i=backgroundGrasses.length-1; i>=0; i--) {
+                    // move each grassdown the screen
+                    let grass = backgroundGrasses[i];
+                    grass.y += player.speed;
+                    
+                    // check for grasses that go below the screen and delete them
+                    if (grass.y > canvas.height) {
+                        backgroundGrasses.splice(i,1);
+                    }
+                }
+            }
+
+            function manageChocobos() {
+                if (!bossTime) {
+                    chocoboFrameCounter++;
+                    if (chocoboFrameCounter >= framesPerSecondUpdate / numberOfChocobosPerSecond) {
+                        // reset the timer
+                        chocoboFrameCounter = 0;
+                        
+                        // launch a new chocobo
+                        let newChocobo = new Chocobo();
+                        newChocobo.x = Math.random() * (canvas.width - newChocobo.width)
+                        chocobos.push(newChocobo);
+                    }
+                }
+
+                for (let i=chocobos.length-1; i>=0; i--) {
+                    // move each chocobo
+                    let chocobo = chocobos[i];
+                    chocobo.y += chocobo.speed;
+                    
+                    // check for chocobos that go below the screen and delete them
+                    if (chocobo.y > canvas.height) {
+                        chocobos.splice(i,1);
+                    }
+                }
+            }
+            function manageFireballs() {
+                let index = 0;
+                for (let fireball of fireballs) {
+                    fireball.y = fireball.y - fireball.speed;
+                    
+                    if (fireball.y + fireball.height <= 0) {
+                        fireballs.splice(index,1);
+                    }
+                    index++;
+                }
+            }
+            function managePowerups() {
+                // spawning new powerups
+                if (killsSinceLastPowerup >= requiredKillsForPowerup) {
+                    // launch a power up
+                    let powerup = new PowerUp();
+                    powerup.y = 0 - powerup.height;
+                    powerup.x = canvas.width/2 - powerup.width/2;
+                    powerups.push(powerup);
+
+                    // set back to 0 so we can earn another powerup
+                    killsSinceLastPowerup = 0;
+                }
+
+                // moving our power ups
+                for (let i=powerups.length-1; i>=0; i--) {
+                    // move each powerup
+                    let powerup = powerups[i];
+                    powerup.y += powerup.speed;
+                    
+                    // check for powerups that go below the screen and delete them
+                    if (powerup.y > canvas.height) {
+                        powerups.splice(i,1);
+                    }
+                }
+
+            }
+
+            function manageBossTime() {
+                if (bossTime) {
+                    for (let i=0; i<bosses[bossesIndex].length; i++) {
+                        let boss = bosses[bossesIndex][i];
+
+                        if (!boss.inPlace) {
+                            boss.y += boss.speed;
+                            if (boss.y >= 20) {
+                                boss.inPlace = true;
+                            }
+                        }
+                        else { // if the boss IS in place
+                            if (boss.movingLeft) {
+                                boss.x -= boss.speed;
+                            }
+                            else { // moving right
+                                boss.x += boss.speed;
+                            }
+
+                            // if boss is out of bounds
+                            if (
+                                boss.x <= 0 ||
+                                boss.x + boss.width >= canvas.width
+                            ) {
+                                boss.movingLeft = !boss.movingLeft;
+                            }
+
+                            // don't get caught in the wall
+                            if (boss.x <= 0) {
+                                boss.x = 0;
+                            }
+                            if (boss.x + boss.width >= canvas.width) {
+                                boss.x = canvas.width - boss.width;
+                            }
+                        }
+                    }
+                }
+            }
+
+            function manageDeadAndDyingObjects() {
+                for (let i=dyingObjects.length-1; i>=0; i--) {
+                    // move each grassdown the screen
+                    let dying = dyingObjects[i];
+                    dying.y += player.speed;
+                    dying.handleImageSwapping();
+                    
+                    // check for grasses that go below the screen and delete them
+                    if (dying.y > canvas.height) {
+                        dyingObjects.splice(i,1);
+                    }
+                }
+            }
+
+            function manageCollisionDetection() {
+                // check fireballs to chocobos
+                for (let i=fireballs.length-1; i>=0; i--) {
+                    let fireball = fireballs[i];
+
+                    for (let j=chocobos.length-1; j>=0; j--) {
+                        let chocobo = chocobos[j];
+
+                        if (collided(fireball, chocobo)) {
+                            killsSinceLastPowerup++;
+                            numberOfChocobosKilled++;
+
+                            if (numberOfChocobosKilled >= numberOfChocobosToKill) {
+                                bossTime = true;
+                                numberOfChocobosKilled = 0;
+                            }
+                            
+                            // Add a dying object for the chocobo
+                            dyingObjects.push(new DyingObject(chocobo));
+
+                            // delete the chocobo;
+                            fireballs.splice(i,1);
+                            chocobos.splice(j,1);
+                        }
+                    }
+                    
+                    if (bossTime) {
+                        for (let j=bosses[bossesIndex].length-1; j>=0; j--) {
+                            let boss = bosses[bossesIndex][j];
+
+                            if (boss.inPlace) {
+                                if (collided(fireball, boss)) {
+                                    fireballs.splice(i,1);
+                                    damageObject(boss, fireball.damage);
+                                    if (boss.hp <= 0) {
+                                        dyingObjects.push(new DyingObject(boss));
+                                        bosses[bossesIndex].splice(j,1);
+
+                                        if (bosses[bossesIndex].length == 0) {
+                                            bossTime = false;
+                                            bossesIndex++;
+
+                                            if (bossesIndex >= bosses.length) {
+                                                bossesIndex = 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // check player and chocobos
+                for (let i=chocobos.length-1; i>=0; i--) {
+                    let chocobo = chocobos[i];
+
+                    if (collided(chocobo, player)) {
+                        damageObject(player, chocobo.damage);
+                        chocobos.splice(i,1);
+                    }
+                }
+
+                // check player and powerups
+                for (let i=powerups.length-1; i>=0; i--) {
+                    let powerup = powerups[i];
+                    
+                    if (collided(powerup, player)) {
+                        powerups.splice(i,1);
+                    }
+                }
+            }
+
+            function damageObject(object, damage) {
+                object.hp = object.hp - damage;
+            }
+
+            function collided(object1, object2) {
+                if (
+                    object1 != null &&
+                    object2 != null &&
+                    object1.x < object2.x + object2.width  &&
+                    object1.y < object2.y + object2.height &&
+                    object1.x + object1.width  > object2.x &&
+                    object1.y + object1.height > object2.y
+                ) {
+                    return true;
+                }
+                return false;
+            }
+
+            function goFullScreen() {
+                // make the canvas go full screen
+                if(canvas.canvas.webkitRequestFullScreen) {
+                    canvas.canvas.webkitRequestFullScreen();
+                }
+                else {
+                    canvas.canvas.mozRequestFullScreen();
+                }   
+            }
+
+            function start() {
+                canvas = new BackgroundCanvas(
+                    document.getElementById("canvas"),
+                    screenSizeMultiplier // screen size
+                );
+
+                player = new Player(canvas);
+
+                bosses = [
+                    [new Seymour(canvas.width/2)                                                            ],
+                    [new Seymour(canvas.width/3), new Seymour(canvas.width*2/3)                             ],
+                    [new Seymour(canvas.width/4), new Seymour(canvas.width/2), new Seymour(canvas.width*3/4)],
+                ];
+
+                // pre-populate our grasses
+                for (let i=0; i<canvas.height; i+=player.speed) {
+                    backgroundGrasses.push(new Grass(Math.random() * canvas.width, i));
+                }
+                setKeyListeners();
+            }
+
+            function setKeyListeners() {
+                function checkKeyDown(event) {
+                    event = event || window.event;
+                    console.log(event)
+
+                    let up_arrow    = '38';
+                    let down_arrow  = '40';
+                    let left_arrow  = '37';
+                    let right_arrow = '39';
+                    let w = '87';
+                    let a = '65';
+                    let s = '83';
+                    let d = '68';
+                    let space = '32';
+                    let escape = '27';
+
+
+                    if (event.keyCode == up_arrow || event.keyCode == w) {
+                        player.moving_up = true;
+                    }
+
+                    if (event.keyCode == down_arrow || event.keyCode == s) {
+                        player.moving_down = true;
+                    }
+
+                    if (event.keyCode == left_arrow || event.keyCode == a) {
+                        player.moving_left = true;
+                    }
+
+                    if (event.keyCode == right_arrow || event.keyCode ==  d) {
+                        player.moving_right = true;
+                    }
+
+                    if (event.keyCode == space) {
+                        shootFireball();
+                    }
+                }
+
+                function checkKeyUp(event) {
+                    event = event || window.event;
+
+                    let up_arrow = '38';
+                    let down_arrow = '40';
+                    let left_arrow = '37';
+                    let right_arrow = '39';
+                    let w = '87';
+                    let a = '65';
+                    let s = '83';
+                    let d = '68';
+
+                    if (event.keyCode == up_arrow || event.keyCode == w) {
+                        player.moving_up = false;
+                    }
+
+                    if (event.keyCode == down_arrow || event.keyCode == s) {
+                        player.moving_down = false;
+                    }
+
+                    if (event.keyCode == left_arrow || event.keyCode == a) {
+                        player.moving_left = false;
+                    }
+
+                    if (event.keyCode == right_arrow || event.keyCode ==  d) {
+                        player.moving_right = false;
+                    }
+                }
+
+                // this says, any time we press a button, run the checkKey function
+                document.onkeydown = checkKeyDown;
+                document.onkeyup = checkKeyUp;
+            }
+
+            //---------------------------------------------------
+            // set up
+            //---------------------------------------------------
+            let GameUpdateLoop = function(){
+                update();
+            }
+            let GameDrawLoop = function(){
+                draw();
+            }
+
+            //---------------------------------------------------
+            // launch our game
+            //---------------------------------------------------
+            start();
+            setInterval(GameUpdateLoop, 1000/framesPerSecondUpdate);
+            setInterval(GameDrawLoop, 1000/framesPerSecondDraw);
+        </script>
+    </body>
+</html>
